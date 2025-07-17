@@ -1,0 +1,474 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GT1 - Build Your Own Password Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .hero-section {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 500px;
+            position: relative;
+        }
+        .hero-audio {
+            position: absolute;
+            opacity: 0.2;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .code-block {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .step-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-black text-white py-4 shadow-lg">
+        <div class="container mx-auto px-4">
+            <h1 class="orbitron text-3xl md:text-4xl font-bold text-center">GT1</h1>
+            <p class="text-center text-gray-300 mt-2">Security Solutions</p>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section flex items-center justify-center relative">
+        <audio autoplay loop class="hero-audio">
+            <source src="hero.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div class="text-center z-10 px-4">
+            <h2 class="orbitron text-4xl md:text-6xl font-bold text-white mb-6">Build Your Own Password Manager</h2>
+            <p class="text-xl text-gray-200 mb-8">A step-by-step guide to creating a secure Python password manager</p>
+            <a href="#tutorial" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 inline-block">
+                Start Learning
+            </a>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="orbitron text-3xl font-bold text-center mb-12">Why Build Your Own Password Manager?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-6 rounded-lg shadow-md">
+                    <div class="text-blue-600 mb-4">
+                        <i class="fas fa-lock text-4xl"></i>
+                    </div>
+                    <h3 class="orbitron text-xl font-semibold mb-3">Enhanced Security</h3>
+                    <p class="text-gray-600">You control the encryption and storage, eliminating third-party risks.</p>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-md">
+                    <div class="text-blue-600 mb-4">
+                        <i class="fas fa-code text-4xl"></i>
+                    </div>
+                    <h3 class="orbitron text-xl font-semibold mb-3">Customizable</h3>
+                    <p class="text-gray-600">Tailor features to your specific needs and workflow.</p>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-md">
+                    <div class="text-blue-600 mb-4">
+                        <i class="fas fa-graduation-cap text-4xl"></i>
+                    </div>
+                    <h3 class="orbitron text-xl font-semibold mb-3">Learning Experience</h3>
+                    <p class="text-gray-600">Gain practical skills in Python, encryption, and security best practices.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tutorial Section -->
+    <section id="tutorial" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="orbitron text-3xl font-bold text-center mb-12">Step-by-Step Tutorial</h2>
+            
+            <!-- Step 1 -->
+            <div class="mb-16 step-card bg-white p-6 rounded-lg shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 orbitron">1</div>
+                    <h3 class="orbitron text-2xl font-semibold">Install Python on Windows</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <p class="mb-4 text-gray-700">Before we begin coding, you'll need Python installed on your Windows machine.</p>
+                        <ol class="list-decimal pl-5 space-y-2 text-gray-700">
+                            <li>Visit <a href="https://www.python.org/downloads/" class="text-blue-600 hover:underline" target="_blank">python.org/downloads</a></li>
+                            <li>Download the latest Python 3.x version</li>
+                            <li>Run the installer</li>
+                            <li>Check "Add Python to PATH"</li>
+                            <li>Click "Install Now"</li>
+                            <li>After installation, verify by opening Command Prompt and typing <code class="bg-gray-200 px-1 rounded">python --version</code></li>
+                        </ol>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=764&q=80" alt="Python installation" class="rounded-lg shadow-md max-h-64">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="mb-16 step-card bg-white p-6 rounded-lg shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 orbitron">2</div>
+                    <h3 class="orbitron text-2xl font-semibold">Set Up Your Project</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <p class="mb-4 text-gray-700">Create a new directory for your password manager project and set up the basic files.</p>
+                        <div class="code-block mb-4">
+                            <pre><code># Create project directory
+mkdir password-manager
+cd password-manager
+
+# Create main Python file
+touch password_manager.py
+
+# Install required libraries
+pip install cryptography</code></pre>
+                        </div>
+                        <p class="text-gray-700">We'll use the <code class="bg-gray-200 px-1 rounded">cryptography</code> library for secure encryption.</p>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Project setup" class="rounded-lg shadow-md max-h-64">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="mb-16 step-card bg-white p-6 rounded-lg shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 orbitron">3</div>
+                    <h3 class="orbitron text-2xl font-semibold">Basic Password Manager Code</h3>
+                </div>
+                <div class="grid grid-cols-1 gap-8">
+                    <div>
+                        <p class="mb-4 text-gray-700">Here's the complete code for a basic but functional password manager:</p>
+                        <div class="code-block mb-4">
+                            <pre><code>from cryptography.fernet import Fernet
+import json
+import os
+
+class PasswordManager:
+    def __init__(self):
+        self.key = None
+        self.password_file = None
+        self.password_dict = {}
+
+    def create_key(self, path):
+        self.key = Fernet.generate_key()
+        with open(path, 'wb') as f:
+            f.write(self.key)
+
+    def load_key(self, path):
+        with open(path, 'rb') as f:
+            self.key = f.read()
+
+    def create_password_file(self, path, initial_values=None):
+        self.password_file = path
+        
+        if initial_values is not None:
+            for key, value in initial_values.items():
+                self.add_password(key, value)
+
+    def load_password_file(self, path):
+        self.password_file = path
+        
+        with open(path, 'r') as f:
+            for line in f:
+                site, encrypted = line.strip().split(":")
+                self.password_dict[site] = Fernet(self.key).decrypt(encrypted.encode()).decode()
+
+    def add_password(self, site, password):
+        self.password_dict[site] = password
+        
+        if self.password_file is not None:
+            with open(self.password_file, 'a') as f:
+                encrypted = Fernet(self.key).encrypt(password.encode())
+                f.write(f"{site}:{encrypted.decode()}\n")
+
+    def get_password(self, site):
+        return self.password_dict[site]
+
+def main():
+    pm = PasswordManager()
+    
+    print("""GT1 Password Manager
+1. Create new key
+2. Load existing key
+3. Create new password file
+4. Load existing password file
+5. Add new password
+6. Get a password
+q. Quit
+""")
+    
+    while True:
+        choice = input("Enter your choice: ")
+        if choice == "1":
+            path = input("Enter path to save key: ")
+            pm.create_key(path)
+        elif choice == "2":
+            path = input("Enter path of key: ")
+            pm.load_key(path)
+        elif choice == "3":
+            path = input("Enter path to save password file: ")
+            pm.create_password_file(path)
+        elif choice == "4":
+            path = input("Enter path of password file: ")
+            pm.load_password_file(path)
+        elif choice == "5":
+            site = input("Enter the site name: ")
+            password = input("Enter the password: ")
+            pm.add_password(site, password)
+        elif choice == "6":
+            site = input("Enter the site name: ")
+            print(f"Password for {site}: {pm.get_password(site)}")
+        elif choice == "q":
+            break
+        else:
+            print("Invalid choice!")
+
+if __name__ == "__main__":
+    main()</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4 -->
+            <div class="mb-16 step-card bg-white p-6 rounded-lg shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 orbitron">4</div>
+                    <h3 class="orbitron text-2xl font-semibold">Save and Run Your Program</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <p class="mb-4 text-gray-700">Now that you've written the code, let's save and run it:</p>
+                        <ol class="list-decimal pl-5 space-y-2 text-gray-700">
+                            <li>Save the file as <code class="bg-gray-200 px-1 rounded">password_manager.py</code></li>
+                            <li>Open Command Prompt in your project directory</li>
+                            <li>Run the program with <code class="bg-gray-200 px-1 rounded">python password_manager.py</code></li>
+                            <li>Follow the on-screen menu to create your encryption key and password file</li>
+                            <li>Start adding your passwords!</li>
+                        </ol>
+                        <p class="mt-4 text-gray-700">Make sure to keep your encryption key file safe - without it, you won't be able to decrypt your passwords!</p>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1469&q=80" alt="Running Python code" class="rounded-lg shadow-md max-h-64">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 5 -->
+            <div class="mb-16 step-card bg-white p-6 rounded-lg shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 orbitron">5</div>
+                    <h3 class="orbitron text-2xl font-semibold">Using Your Password Manager</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <p class="mb-4 text-gray-700">Here's how to use your new password manager:</p>
+                        <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                            <li>First run: Create a new key and password file</li>
+                            <li>Subsequent runs: Load your existing key and password file</li>
+                            <li>Add passwords for different websites/services</li>
+                            <li>Retrieve passwords when needed</li>
+                            <li>Keep your key file and password file in a secure location</li>
+                        </ul>
+                        <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        <strong>Security Tip:</strong> Never share your key file or store it with your password file. Consider keeping it on a separate USB drive.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <img src="https://images.unsplash.com/photo-1585771724684-38269d6639fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Password security" class="rounded-lg shadow-md max-h-64">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 6 -->
+            <div class="mb-16 step-card bg-white p-6 rounded-lg shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 orbitron">6</div>
+                    <h3 class="orbitron text-2xl font-semibold">Bonus: Save and Run from a USB Drive</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <p class="mb-4 text-gray-700">For portability and security, you can run your password manager from a USB drive using a portable Python version:</p>
+                        <ol class="list-decimal pl-5 space-y-2 text-gray-700">
+                            <li>Insert your USB drive and note its drive letter (e.g., <code class="bg-gray-200 px-1 rounded">E:</code>)</li>
+                            <li>Create a folder on the USB drive (e.g., <code class="bg-gray-200 px-1 rounded">E:\PasswordManager</code>)</li>
+                            <li>Download Portable Python from <a href="https://winpython.github.io/" class="text-blue-600 hover:underline" target="_blank">winpython.github.io</a></li>
+                            <li>Extract the Portable Python archive to your USB drive (e.g., <code class="bg-gray-200 px-1 rounded">E:\WinPython</code>)</li>
+                            <li>Copy your <code class="bg-gray-200 px-1 rounded">password_manager.py</code> file to the <code class="bg-gray-200 px-1 rounded">E:\PasswordManager</code> folder</li>
+                            <li>Open the Portable Python folder on the USB drive and run <code class="bg-gray-200 px-1 rounded">WinPython Command Prompt.exe</code></li>
+                            <li>In the command prompt, navigate to your project folder (e.g., <code class="bg-gray-200 px-1 rounded">cd \PasswordManager</code>)</li>
+                            <li>Install the required <code class="bg-gray-200 px-1 rounded">cryptography</code> library with <code class="bg-gray-200 px-1 rounded">pip install cryptography</code></li>
+                            <li>Run the program with <code class="bg-gray-200 px-1 rounded">python password_manager.py</code></li>
+                            <li>Store your key and password files on the USB drive, but keep backups elsewhere</li>
+                        </ol>
+                        <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        <strong>Security Tip:</strong> Always eject the USB drive properly to prevent data corruption, and consider encrypting the USB drive itself for extra security.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80" alt="USB drive setup" class="rounded-lg shadow-md max-h-64">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Next Steps Section -->
+    <section class="py-16 bg-blue-600 text-white">
+        <div class="container mx-auto px-4">
+            <h2 class="orbitron text-3xl font-bold text-center mb-12">Enhance Your Password Manager</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-blue-700 p-6 rounded-lg shadow-md">
+                    <h3 class="orbitron text-xl font-semibold mb-3">Add a GUI</h3>
+                    <p class="text-blue-100">Use Tkinter or PyQt to create a graphical interface for your password manager.</p>
+                </div>
+                <div class="bg-blue-700 p-6 rounded-lg shadow-md">
+                    <h3 class="orbitron text-xl font-semibold mb-3">Cloud Backup</h3>
+                    <p class="text-blue-100">Add functionality to securely backup your passwords to cloud storage.</p>
+                </div>
+                <div class="bg-blue-700 p-6 rounded-lg shadow-md">
+                    <h3 class="orbitron text-xl font-semibold mb-3">Password Generator</h3>
+                    <p class="text-blue-100">Implement a strong password generator with customizable options.</p>
+                </div>
+            </div>
+            <div class="mt-12 text-center">
+                <a href="#" class="bg-white hover:bg-gray-100 text-blue-600 font-bold py-3 px-6 rounded-lg transition duration-300 inline-block">
+                    More GT1 Tutorials
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-8">
+                <h3 class="orbitron text-2xl font-bold mb-4">GT1</h3>
+                <p class="text-gray-400">Empowering you with security knowledge</p>
+            </div>
+            <div class="flex justify-center space-x-6 mb-8">
+                <a href="https://www.facebook.com/profile.php?id=61571184797630" target="_blank" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                <a href="https://www.instagram.com/giga832065/" target="_blank" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://www.x.com/giga832065" target="_blank" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="http://www.gt1blog.tech/" target="_blank" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fab fa-blogger"></i>
+                </a>
+                <a href="https://github.com/GIGATECH832065" target="_blank" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.gigatech1.com" target="_blank" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-globe"></i>
+                </a>
+                <a href="https://www.youtube.com/@GT1-WD" target="_blank" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fab fa-youtube"></i>
+                </a>
+            </div>
+            <div class="text-center text-gray-500 text-sm">
+                <p>© 2025 GT1 Security Solutions. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
